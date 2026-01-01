@@ -11,7 +11,10 @@ struct MenuBarView: View {
                 Text("Cronos")
                     .font(.headline)
                 Spacer()
-                Button(action: { openWindow(id: "add-job") }) {
+                Button(action: {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(id: "add-job")
+                }) {
                     Image(systemName: "plus")
                 }
                 .buttonStyle(.borderless)
@@ -31,6 +34,7 @@ struct MenuBarView: View {
                     Text("No jobs scheduled")
                         .foregroundStyle(.secondary)
                     Button("Add Job") {
+                        NSApp.activate(ignoringOtherApps: true)
                         openWindow(id: "add-job")
                     }
                     .buttonStyle(.bordered)

@@ -50,6 +50,8 @@ struct AddJobView: View {
                         Button(action: selectDirectory) {
                             Image(systemName: "folder")
                         }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
                     }
                 }
 
