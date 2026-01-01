@@ -8,7 +8,19 @@ class JobManager: ObservableObject {
     @Published var editingJob: Job?
     @Published var selectedJob: Job?
     @Published var selectedJobForLogs: Job?
+    @Published var selectedJobForHistory: Job?
+    @Published var expandedJobId: UUID?
     @Published var errorMessage: String?
+
+    /// Live output data for currently running jobs
+    @Published private(set) var liveOutputs: [UUID: LiveOutput] = [:]
+
+    struct LiveOutput {
+        var stdout: String = ""
+        var stderr: String = ""
+        var startedAt: Date
+        var runId: UUID
+    }
 
     private let store = JobStore()
     private let runner = JobRunner()
@@ -18,6 +30,8 @@ class JobManager: ObservableObject {
         Task {
             await loadJobs()
             setupScheduler()
+            // Request notification permission
+            _ = await NotificationService.shared.requestPermission()
         }
     }
 
@@ -47,7 +61,9 @@ class JobManager: ObservableObject {
 
     func deleteJob(_ job: Job) async {
         jobs.removeAll { $0.id == job.id }
+        // Clean up both legacy logs and new run history
         await store.deleteLog(for: job.id)
+        try? await store.deleteRunsFor(jobId: job.id)
         await saveJobs()
         scheduler?.reschedule(jobs: jobs)
     }
@@ -75,14 +91,54 @@ class JobManager: ObservableObject {
 
         runningJobIds.insert(job.id)
 
+        // Create a new run record
+        var run: LogRun?
         do {
-            let logFiles = await store.logFiles(for: job.id)
+            run = try await store.createRun(for: job.id)
+        } catch {
+            errorMessage = "Failed to create log run: \(error.localizedDescription)"
+        }
+
+        // Initialize live output for this job
+        if let run = run {
+            liveOutputs[job.id] = LiveOutput(
+                stdout: "",
+                stderr: "",
+                startedAt: run.startedAt,
+                runId: run.id
+            )
+        }
+
+        do {
+            // Use the new run-based log files if available, otherwise fall back to legacy
+            let logFiles: (stdout: URL, stderr: URL)
+            if let run = run {
+                logFiles = await store.logFilesForRun(run.id)
+            } else {
+                logFiles = await store.logFiles(for: job.id)
+            }
+
             let success = try await runner.run(
                 command: job.command,
                 workingDirectory: job.workingDirectory,
                 stdoutFile: logFiles.stdout,
-                stderrFile: logFiles.stderr
+                stderrFile: logFiles.stderr,
+                onStdout: { [weak self] text in
+                    Task { @MainActor in
+                        self?.liveOutputs[job.id]?.stdout.append(text)
+                    }
+                },
+                onStderr: { [weak self] text in
+                    Task { @MainActor in
+                        self?.liveOutputs[job.id]?.stderr.append(text)
+                    }
+                }
             )
+
+            // Complete the run record
+            if let run = run {
+                try? await store.completeRun(run, exitCode: success ? 0 : 1, success: success)
+            }
 
             // Update job with last run info
             if let index = jobs.firstIndex(where: { $0.id == job.id }) {
@@ -90,15 +146,28 @@ class JobManager: ObservableObject {
                 jobs[index].lastRunSuccessful = success
                 await saveJobs()
             }
+
+            // Send notification on failure
+            if !success {
+                await NotificationService.shared.sendJobFailedNotification(jobName: job.name)
+            }
         } catch {
             errorMessage = "Failed to run job '\(job.name)': \(error.localizedDescription)"
 
-            // Still mark as failed
+            // Complete the run as failed
+            if let run = run {
+                try? await store.completeRun(run, exitCode: -1, success: false)
+            }
+
+            // Still mark job as failed
             if let index = jobs.firstIndex(where: { $0.id == job.id }) {
                 jobs[index].lastRun = Date()
                 jobs[index].lastRunSuccessful = false
                 await saveJobs()
             }
+
+            // Send notification on error
+            await NotificationService.shared.sendJobFailedNotification(jobName: job.name)
         }
 
         runningJobIds.remove(job.id)
@@ -112,6 +181,40 @@ class JobManager: ObservableObject {
 
     func readLog(for job: Job) async -> (stdout: String, stderr: String) {
         await store.readLog(for: job.id)
+    }
+
+    // MARK: - Live Output
+
+    /// Get live stdout for a running job
+    func liveStdout(for job: Job) -> String {
+        liveOutputs[job.id]?.stdout ?? ""
+    }
+
+    /// Get live stderr for a running job
+    func liveStderr(for job: Job) -> String {
+        liveOutputs[job.id]?.stderr ?? ""
+    }
+
+    /// Get when the current run started
+    func currentRunStartTime(for job: Job) -> Date? {
+        liveOutputs[job.id]?.startedAt
+    }
+
+    // MARK: - Run History
+
+    /// Load all runs for a job (newest first)
+    func loadRuns(for jobId: UUID) async -> [LogRun] {
+        (try? await store.runsFor(jobId: jobId)) ?? []
+    }
+
+    /// Get the latest run for a job
+    func latestRun(for job: Job) async -> LogRun? {
+        try? await store.latestRun(for: job.id)
+    }
+
+    /// Read log content for a specific run
+    func readLogForRun(_ runId: UUID) async -> (stdout: String, stderr: String) {
+        await store.readLogForRun(runId)
     }
 
     // MARK: - Scheduler

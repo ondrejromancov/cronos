@@ -42,10 +42,10 @@ struct JobDetailSidebar: View {
                     openWindow(id: "edit-job")
                 }
 
-                MenuRow(icon: "doc.text", label: "Show Logs") {
-                    jobManager.selectedJobForLogs = job
+                MenuRow(icon: "clock.arrow.circlepath", label: "Log History") {
+                    jobManager.selectedJobForHistory = job
                     NSApp.activate(ignoringOtherApps: true)
-                    openWindow(id: "logs")
+                    openWindow(id: "log-history")
                 }
             }
 

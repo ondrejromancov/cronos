@@ -34,6 +34,6 @@ struct JobListView: View {
                 }
             }
         }
-        .frame(maxHeight: 300)
+        .frame(maxHeight: 400)
     }
 }

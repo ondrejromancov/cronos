@@ -32,6 +32,12 @@ struct CronosApp: App {
         }
         .windowResizability(.contentSize)
 
+        Window("Log History", id: "log-history") {
+            LogHistoryWindow()
+                .environmentObject(jobManager)
+        }
+        .windowResizability(.contentMinSize)
+
         Settings {
             SettingsView()
         }

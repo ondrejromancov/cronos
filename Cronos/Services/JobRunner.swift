@@ -3,11 +3,20 @@ import Foundation
 actor JobRunner {
     /// Runs a bash command and captures output to files
     /// Returns true if exit code was 0
+    /// - Parameters:
+    ///   - command: The bash command to run
+    ///   - workingDirectory: Directory to run the command in
+    ///   - stdoutFile: File to write stdout to
+    ///   - stderrFile: File to write stderr to
+    ///   - onStdout: Optional callback for streaming stdout (called with new text as it arrives)
+    ///   - onStderr: Optional callback for streaming stderr (called with new text as it arrives)
     func run(
         command: String,
         workingDirectory: String,
         stdoutFile: URL,
-        stderrFile: URL
+        stderrFile: URL,
+        onStdout: (@Sendable (String) -> Void)? = nil,
+        onStderr: (@Sendable (String) -> Void)? = nil
     ) async throws -> Bool {
         // Ensure log files exist
         let fileManager = FileManager.default
@@ -39,11 +48,14 @@ actor JobRunner {
         let stdoutHandle = try FileHandle(forWritingTo: stdoutFile)
         let stderrHandle = try FileHandle(forWritingTo: stderrFile)
 
-        // Write output to files as it arrives
+        // Write output to files as it arrives and notify callbacks
         stdoutPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             if !data.isEmpty {
                 try? stdoutHandle.write(contentsOf: data)
+                if let text = String(data: data, encoding: .utf8) {
+                    onStdout?(text)
+                }
             }
         }
 
@@ -51,6 +63,9 @@ actor JobRunner {
             let data = handle.availableData
             if !data.isEmpty {
                 try? stderrHandle.write(contentsOf: data)
+                if let text = String(data: data, encoding: .utf8) {
+                    onStderr?(text)
+                }
             }
         }
 
@@ -71,9 +86,15 @@ actor JobRunner {
 
                 if !remainingStdout.isEmpty {
                     try? stdoutHandle.write(contentsOf: remainingStdout)
+                    if let text = String(data: remainingStdout, encoding: .utf8) {
+                        onStdout?(text)
+                    }
                 }
                 if !remainingStderr.isEmpty {
                     try? stderrHandle.write(contentsOf: remainingStderr)
+                    if let text = String(data: remainingStderr, encoding: .utf8) {
+                        onStderr?(text)
+                    }
                 }
 
                 try? stdoutHandle.close()
