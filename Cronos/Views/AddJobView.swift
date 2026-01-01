@@ -25,16 +25,6 @@ struct AddJobView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text(editing == nil ? "New Job" : "Edit Job")
-                    .font(.headline)
-                Spacer()
-            }
-            .padding()
-
-            Divider()
-
             // Form
             Form {
                 Section {
@@ -79,6 +69,7 @@ struct AddJobView: View {
                                 Text(String(format: "%02d", h)).tag(h)
                             }
                         }
+                        .labelsHidden()
                         .frame(width: 60)
                         Text(":")
                         Picker("Minute", selection: $minute) {
@@ -86,6 +77,7 @@ struct AddJobView: View {
                                 Text(String(format: "%02d", m)).tag(m)
                             }
                         }
+                        .labelsHidden()
                         .frame(width: 60)
                     }
 
@@ -104,8 +96,6 @@ struct AddJobView: View {
             }
             .formStyle(.grouped)
 
-            Divider()
-
             // Buttons
             HStack {
                 Button("Cancel") {
@@ -118,12 +108,14 @@ struct AddJobView: View {
                 Button(editing == nil ? "Add" : "Save") {
                     save()
                 }
+                .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.return)
                 .disabled(name.isEmpty || command.isEmpty)
             }
             .padding()
         }
-        .frame(width: 400, height: 450)
+        .frame(width: 400)
+        .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             if let job = editing {
                 name = job.name
