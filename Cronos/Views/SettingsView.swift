@@ -42,7 +42,9 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400, height: 250)
+        .scrollDisabled(true)
+        .frame(width: 380)
+        .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             // Sync with actual state on appear
             launchAtLogin = LaunchAtLogin.isEnabled
