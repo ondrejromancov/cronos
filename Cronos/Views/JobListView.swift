@@ -5,11 +5,15 @@ struct JobListView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0) {
+            LazyVStack(spacing: 1) {
                 ForEach(jobManager.jobs) { job in
                     JobRowView(job: job)
                         .contentShape(Rectangle())
-                        .background(jobManager.selectedJob?.id == job.id ? Color.accentColor.opacity(0.2) : Color.clear)
+                        .background(
+                            jobManager.selectedJob?.id == job.id
+                                ? Color.accentColor.opacity(0.1)
+                                : Color.clear
+                        )
                         .onTapGesture {
                             if jobManager.selectedJob?.id == job.id {
                                 jobManager.selectedJob = nil
@@ -25,13 +29,8 @@ struct JobListView: View {
                             arrowEdge: .trailing
                         ) {
                             JobDetailSidebar(job: job)
-                                .frame(width: 200)
+                                .frame(width: 180)
                         }
-
-                    if job.id != jobManager.jobs.last?.id {
-                        Divider()
-                            .padding(.horizontal, 12)
-                    }
                 }
             }
         }

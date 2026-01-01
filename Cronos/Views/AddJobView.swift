@@ -29,44 +29,43 @@ struct AddJobView: View {
             Form {
                 Section {
                     TextField("Name", text: $name)
-                        .textFieldStyle(.roundedBorder)
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Command")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                         TextEditor(text: $command)
                             .font(.system(.body, design: .monospaced))
                             .frame(minHeight: 60)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                            )
+                            .scrollContentBackground(.hidden)
+                            .padding(8)
+                            .background(Color.primary.opacity(0.03))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
 
                     HStack {
                         TextField("Working Directory", text: $workingDirectory)
-                            .textFieldStyle(.roundedBorder)
+                            .font(.system(.body, design: .monospaced))
                         Button(action: selectDirectory) {
                             Image(systemName: "folder")
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        .buttonStyle(.borderless)
                     }
                 }
 
-                Section("Schedule") {
-                    Picker("", selection: $scheduleType) {
+                Section {
+                    Picker("Schedule", selection: $scheduleType) {
                         ForEach(ScheduleType.allCases, id: \.self) { type in
                             Text(type.rawValue).tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
-                    .labelsHidden()
 
                     HStack {
-                        Text("Time:")
-                        Picker("Hour", selection: $hour) {
+                        Text("Time")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Picker("", selection: $hour) {
                             ForEach(0..<24, id: \.self) { h in
                                 Text(String(format: "%02d", h)).tag(h)
                             }
@@ -74,7 +73,8 @@ struct AddJobView: View {
                         .labelsHidden()
                         .frame(width: 60)
                         Text(":")
-                        Picker("Minute", selection: $minute) {
+                            .foregroundStyle(.tertiary)
+                        Picker("", selection: $minute) {
                             ForEach(0..<60, id: \.self) { m in
                                 Text(String(format: "%02d", m)).tag(m)
                             }
@@ -104,6 +104,7 @@ struct AddJobView: View {
                     closeWindow()
                 }
                 .keyboardShortcut(.escape)
+                .foregroundStyle(.secondary)
 
                 Spacer()
 
@@ -116,7 +117,7 @@ struct AddJobView: View {
             }
             .padding()
         }
-        .frame(width: 400)
+        .frame(width: 380)
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {
             if let job = editing {

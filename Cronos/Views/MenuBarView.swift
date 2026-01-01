@@ -9,58 +9,70 @@ struct MenuBarView: View {
             // Header
             HStack {
                 Text("Cronos")
-                    .font(.headline)
+                    .font(.system(.headline, weight: .medium))
+                    .foregroundStyle(.primary)
                 Spacer()
                 Button(action: {
                     NSApp.activate(ignoringOtherApps: true)
                     openWindow(id: "add-job")
                 }) {
                     Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.borderless)
                 .help("Add new job")
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            Divider()
+            .padding(.vertical, 10)
 
             // Job list
             if jobManager.jobs.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
-                    Text("No jobs scheduled")
+                VStack(spacing: 12) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 28, weight: .light))
+                        .foregroundStyle(.tertiary)
+                    Text("No jobs")
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Button("Add Job") {
                         NSApp.activate(ignoringOtherApps: true)
                         openWindow(id: "add-job")
                     }
                     .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
+                .padding(.vertical, 32)
             } else {
                 JobListView()
             }
 
-            Divider()
-
             // Footer
-            HStack {
+            HStack(spacing: 16) {
                 SettingsLink {
-                    Text("Settings...")
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
                 }
+                .buttonStyle(.borderless)
+                .help("Settings")
+
                 Spacer()
-                Button("Quit") {
+
+                Button {
                     NSApplication.shared.terminate(nil)
+                } label: {
+                    Image(systemName: "power")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
                 }
+                .buttonStyle(.borderless)
+                .help("Quit")
             }
-            .buttonStyle(.borderless)
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
         }
-        .frame(width: 280)
+        .frame(width: 260)
     }
 }

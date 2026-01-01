@@ -3,53 +3,56 @@ import SwiftUI
 struct JobRowView: View {
     let job: Job
     @EnvironmentObject var jobManager: JobManager
+    @State private var isHovered = false
 
     var body: some View {
-        HStack(spacing: 8) {
-            // Status indicator
-            statusIndicator
-                .font(.system(size: 8))
+        HStack(spacing: 10) {
+            // Status dot
+            Circle()
+                .fill(statusColor)
+                .frame(width: 6, height: 6)
+                .opacity(jobManager.isRunning(job) ? 1 : 0.9)
+                .animation(
+                    jobManager.isRunning(job)
+                        ? .easeInOut(duration: 0.8).repeatForever(autoreverses: true)
+                        : .default,
+                    value: jobManager.isRunning(job)
+                )
 
             // Job name
             Text(job.name)
                 .lineLimit(1)
+                .foregroundStyle(job.isEnabled ? .primary : .secondary)
 
             Spacer()
 
-            // Next run or running status
-            if jobManager.isRunning(job) {
-                ProgressView()
-                    .scaleEffect(0.5)
-                    .frame(width: 12, height: 12)
-                Text("running...")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(nextRunText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            // Status text
+            Text(statusText)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color.clear)
-    }
-
-    @ViewBuilder
-    private var statusIndicator: some View {
-        if jobManager.isRunning(job) {
-            Image(systemName: "circle.dotted")
-                .foregroundStyle(.blue)
-        } else if !job.isEnabled {
-            Image(systemName: "circle")
-                .foregroundStyle(.secondary)
-        } else {
-            Image(systemName: "circle.fill")
-                .foregroundStyle(.green)
+        .padding(.vertical, 10)
+        .background(isHovered ? Color.primary.opacity(0.04) : Color.clear)
+        .onHover { hovering in
+            isHovered = hovering
         }
     }
 
-    private var nextRunText: String {
+    private var statusColor: Color {
+        if jobManager.isRunning(job) {
+            return .blue
+        } else if !job.isEnabled {
+            return .secondary.opacity(0.5)
+        } else {
+            return .green
+        }
+    }
+
+    private var statusText: String {
+        if jobManager.isRunning(job) {
+            return "running"
+        }
         guard job.isEnabled else { return "disabled" }
 
         let nextRun = job.schedule.nextRun()

@@ -13,66 +13,73 @@ struct LogViewerView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Logs: \(job.name)")
-                    .font(.headline)
+                Text(job.name)
+                    .font(.system(.body, weight: .medium))
                 Spacer()
-                Button("Refresh") {
+                Button {
                     Task { await loadLogs() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 12))
                 }
+                .buttonStyle(.borderless)
+                .help("Refresh")
+
                 Button("Done") {
                     jobManager.selectedJobForLogs = nil
                     dismiss()
                 }
                 .keyboardShortcut(.escape)
             }
-            .padding()
-
-            Divider()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
 
             // Tabs
             Picker("", selection: $selectedTab) {
-                HStack {
+                HStack(spacing: 6) {
                     Text("stdout")
                     if !stdout.isEmpty && stdout != "(empty)" {
                         Circle()
                             .fill(.green)
-                            .frame(width: 6, height: 6)
+                            .frame(width: 5, height: 5)
                     }
                 }
                 .tag(0)
 
-                HStack {
+                HStack(spacing: 6) {
                     Text("stderr")
                     if !stderr.isEmpty && stderr != "(empty)" {
                         Circle()
                             .fill(.red)
-                            .frame(width: 6, height: 6)
+                            .frame(width: 5, height: 5)
                     }
                 }
                 .tag(1)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .padding(.horizontal)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
 
             // Log content
             if isLoading {
                 Spacer()
                 ProgressView()
+                    .scaleEffect(0.8)
                 Spacer()
             } else {
                 ScrollView {
                     Text(selectedTab == 0 ? stdout : stderr)
                         .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(selectedTab == 0 ? .primary : .secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding()
+                        .padding(16)
                         .textSelection(.enabled)
                 }
-                .background(Color(nsColor: .textBackgroundColor))
+                .background(Color.primary.opacity(0.03))
             }
         }
-        .frame(width: 600, height: 400)
+        .frame(width: 560, height: 380)
         .task {
             await loadLogs()
         }
