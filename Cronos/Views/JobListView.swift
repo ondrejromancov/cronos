@@ -9,8 +9,23 @@ struct JobListView: View {
                 ForEach(jobManager.jobs) { job in
                     JobRowView(job: job)
                         .contentShape(Rectangle())
+                        .background(jobManager.selectedJob?.id == job.id ? Color.accentColor.opacity(0.2) : Color.clear)
                         .onTapGesture {
-                            jobManager.selectedJob = job
+                            if jobManager.selectedJob?.id == job.id {
+                                jobManager.selectedJob = nil
+                            } else {
+                                jobManager.selectedJob = job
+                            }
+                        }
+                        .popover(
+                            isPresented: Binding(
+                                get: { jobManager.selectedJob?.id == job.id },
+                                set: { if !$0 { jobManager.selectedJob = nil } }
+                            ),
+                            arrowEdge: .trailing
+                        ) {
+                            JobDetailSidebar(job: job)
+                                .frame(width: 200)
                         }
 
                     if job.id != jobManager.jobs.last?.id {
@@ -21,9 +36,5 @@ struct JobListView: View {
             }
         }
         .frame(maxHeight: 300)
-        .popover(item: $jobManager.selectedJob) { job in
-            JobDetailPopover(job: job)
-                .environmentObject(jobManager)
-        }
     }
 }

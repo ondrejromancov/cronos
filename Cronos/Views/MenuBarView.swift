@@ -61,6 +61,6 @@ struct MenuBarView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
-        .frame(width: 300)
+        .frame(width: 280)
     }
 }

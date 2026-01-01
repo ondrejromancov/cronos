@@ -17,7 +17,7 @@
 		A10000010000000000000008 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000008 /* MenuBarView.swift */; };
 		A10000010000000000000009 /* JobListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000009 /* JobListView.swift */; };
 		A10000010000000000000010 /* JobRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000010 /* JobRowView.swift */; };
-		A10000010000000000000011 /* JobDetailPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000011 /* JobDetailPopover.swift */; };
+		A10000010000000000000011 /* JobDetailSidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000011 /* JobDetailSidebar.swift */; };
 		A10000010000000000000012 /* AddJobView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000012 /* AddJobView.swift */; };
 		A10000010000000000000013 /* LogViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000013 /* LogViewerView.swift */; };
 		A10000010000000000000014 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000014 /* SettingsView.swift */; };
@@ -38,7 +38,7 @@
 		A10000020000000000000008 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		A10000020000000000000009 /* JobListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobListView.swift; sourceTree = "<group>"; };
 		A10000020000000000000010 /* JobRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobRowView.swift; sourceTree = "<group>"; };
-		A10000020000000000000011 /* JobDetailPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobDetailPopover.swift; sourceTree = "<group>"; };
+		A10000020000000000000011 /* JobDetailSidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobDetailSidebar.swift; sourceTree = "<group>"; };
 		A10000020000000000000012 /* AddJobView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddJobView.swift; sourceTree = "<group>"; };
 		A10000020000000000000013 /* LogViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogViewerView.swift; sourceTree = "<group>"; };
 		A10000020000000000000014 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -97,7 +97,7 @@
 				A10000020000000000000008 /* MenuBarView.swift */,
 				A10000020000000000000009 /* JobListView.swift */,
 				A10000020000000000000010 /* JobRowView.swift */,
-				A10000020000000000000011 /* JobDetailPopover.swift */,
+				A10000020000000000000011 /* JobDetailSidebar.swift */,
 				A10000020000000000000012 /* AddJobView.swift */,
 				A10000020000000000000013 /* LogViewerView.swift */,
 				A10000020000000000000014 /* SettingsView.swift */,
@@ -228,7 +228,7 @@
 				A10000010000000000000008 /* MenuBarView.swift in Sources */,
 				A10000010000000000000009 /* JobListView.swift in Sources */,
 				A10000010000000000000010 /* JobRowView.swift in Sources */,
-				A10000010000000000000011 /* JobDetailPopover.swift in Sources */,
+				A10000010000000000000011 /* JobDetailSidebar.swift in Sources */,
 				A10000010000000000000012 /* AddJobView.swift in Sources */,
 				A10000010000000000000013 /* LogViewerView.swift in Sources */,
 				A10000010000000000000014 /* SettingsView.swift in Sources */,
