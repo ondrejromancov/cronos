@@ -16,6 +16,8 @@ struct AddJobView: View {
     @State private var hour = 9
     @State private var minute = 0
     @State private var weekday = 2 // Monday
+    @State private var shakeNameField = false
+    @State private var shakeContentField = false
 
     enum ScheduleType: String, CaseIterable {
         case daily = "Daily"
@@ -48,6 +50,8 @@ struct AddJobView: View {
                     .pickerStyle(.segmented)
 
                     TextField("Name", text: $name)
+                        .modifier(ShakeEffect(shakes: shakeNameField ? 2 : 0))
+                        .animation(.default, value: shakeNameField)
 
                     if jobType == .claude {
                         VStack(alignment: .leading, spacing: 6) {
@@ -62,6 +66,8 @@ struct AddJobView: View {
                                 .background(Color.primary.opacity(HoverOpacity.subtle))
                                 .clipShape(RoundedRectangle(cornerRadius: LayoutConstants.buttonCornerRadius))
                         }
+                        .modifier(ShakeEffect(shakes: shakeContentField ? 2 : 0))
+                        .animation(.default, value: shakeContentField)
 
                         HStack {
                             TextField("Context Directory (optional)", text: $contextDirectory)
@@ -84,6 +90,8 @@ struct AddJobView: View {
                                 .background(Color.primary.opacity(HoverOpacity.subtle))
                                 .clipShape(RoundedRectangle(cornerRadius: LayoutConstants.buttonCornerRadius))
                         }
+                        .modifier(ShakeEffect(shakes: shakeContentField ? 2 : 0))
+                        .animation(.default, value: shakeContentField)
                     }
 
                     HStack {
@@ -152,11 +160,10 @@ struct AddJobView: View {
                 Spacer()
 
                 Button(editing == nil ? "Add" : "Save") {
-                    save()
+                    attemptSave()
                 }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.return)
-                .disabled(!isFormValid)
             }
             .padding()
         }
@@ -208,6 +215,21 @@ struct AddJobView: View {
         }
     }
 
+    private func attemptSave() {
+        if name.isEmpty {
+            shakeNameField.toggle()
+            return
+        }
+
+        let contentEmpty = jobType == .claude ? claudePrompt.isEmpty : command.isEmpty
+        if contentEmpty {
+            shakeContentField.toggle()
+            return
+        }
+
+        save()
+    }
+
     private func save() {
         let schedule: Schedule = scheduleType == .daily
             ? .daily(hour: hour, minute: minute)
@@ -248,5 +270,18 @@ struct AddJobView: View {
             jobManager.editingJob = nil
         }
         dismiss()
+    }
+}
+
+struct ShakeEffect: GeometryEffect {
+    var shakes: Int
+    var animatableData: CGFloat {
+        get { CGFloat(shakes) }
+        set { shakes = Int(newValue) }
+    }
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        let offset = sin(animatableData * .pi * 2) * 6
+        return ProjectionTransform(CGAffineTransform(translationX: offset, y: 0))
     }
 }
