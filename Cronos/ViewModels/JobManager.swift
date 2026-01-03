@@ -171,8 +171,10 @@ class JobManager: ObservableObject {
                 await saveJobs()
             }
 
-            // Send notification on failure
-            if !success {
+            // Send notification
+            if success {
+                await NotificationService.shared.sendJobSucceededNotification(jobName: job.name)
+            } else {
                 await NotificationService.shared.sendJobFailedNotification(jobName: job.name)
             }
         } catch {

@@ -37,4 +37,24 @@ actor NotificationService {
             print("Failed to send notification: \(error)")
         }
     }
+
+    /// Send a notification when a job succeeds
+    func sendJobSucceededNotification(jobName: String) async {
+        let content = UNMutableNotificationContent()
+        content.title = "Job Succeeded"
+        content.body = "Job '\(jobName)' completed successfully"
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: UUID().uuidString,
+            content: content,
+            trigger: nil // Deliver immediately
+        )
+
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+        } catch {
+            print("Failed to send notification: \(error)")
+        }
+    }
 }
