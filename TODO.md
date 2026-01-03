@@ -10,4 +10,4 @@
 - [x] Allow different shells (e.g., Zsh, Fish) instead of only Bash
 
 ## Reliability
-- [ ] Ensure failed scheduled jobs are runnable again on the next scheduled time
+- [x] Ensure failed scheduled jobs are runnable again on the next scheduled time

@@ -3,9 +3,11 @@ import Foundation
 class JobScheduler {
     private var timers: [UUID: Timer] = [:]
     private let onTrigger: (UUID) -> Void
+    private let jobProvider: () -> [Job]
 
-    init(onTrigger: @escaping (UUID) -> Void) {
+    init(onTrigger: @escaping (UUID) -> Void, jobProvider: @escaping () -> [Job]) {
         self.onTrigger = onTrigger
+        self.jobProvider = jobProvider
     }
 
     /// Reschedule all jobs (call after any job change)
@@ -35,21 +37,26 @@ class JobScheduler {
     }
 
     private func scheduleTimer(for job: Job, at fireDate: Date) {
+        let jobId = job.id  // Capture only ID, not full job
+
         let timer = Timer(fire: fireDate, interval: 0, repeats: false) { [weak self] _ in
             guard let self = self else { return }
 
             // Trigger the job
-            self.onTrigger(job.id)
+            self.onTrigger(jobId)
 
-            // Schedule the next occurrence
-            DispatchQueue.main.async {
-                self.scheduleNext(job: job)
+            // Schedule the next occurrence with CURRENT job data
+            Task { @MainActor in
+                // Look up current job state - only schedule if still exists and enabled
+                if let currentJob = self.jobProvider().first(where: { $0.id == jobId && $0.isEnabled }) {
+                    self.scheduleNext(job: currentJob)
+                }
             }
         }
 
         // Add to run loop on main thread with .common mode so it fires during menu interactions
         RunLoop.main.add(timer, forMode: .common)
-        timers[job.id] = timer
+        timers[jobId] = timer
     }
 
     func cancelJob(_ jobId: UUID) {

@@ -244,14 +244,19 @@ class JobManager: ObservableObject {
     // MARK: - Scheduler
 
     private func setupScheduler() {
-        scheduler = JobScheduler { [weak self] jobId in
-            guard let self = self else { return }
+        scheduler = JobScheduler(
+            onTrigger: { [weak self] jobId in
+                guard let self = self else { return }
 
-            Task { @MainActor in
-                guard let job = self.jobs.first(where: { $0.id == jobId }) else { return }
-                await self.runJob(job)
+                Task { @MainActor in
+                    guard let job = self.jobs.first(where: { $0.id == jobId }) else { return }
+                    await self.runJob(job)
+                }
+            },
+            jobProvider: { [weak self] in
+                self?.jobs ?? []
             }
-        }
+        )
         scheduler?.reschedule(jobs: jobs)
     }
 
