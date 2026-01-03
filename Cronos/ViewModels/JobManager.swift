@@ -149,12 +149,12 @@ class JobManager: ObservableObject {
                 stdoutFile: logFiles.stdout,
                 stderrFile: logFiles.stderr,
                 onStdout: { [weak self] text in
-                    Task { @MainActor in
+                    Task { @MainActor [weak self] in
                         self?.liveOutputs[job.id]?.stdout.append(text)
                     }
                 },
                 onStderr: { [weak self] text in
-                    Task { @MainActor in
+                    Task { @MainActor [weak self] in
                         self?.liveOutputs[job.id]?.stderr.append(text)
                     }
                 }
