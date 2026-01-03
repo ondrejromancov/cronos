@@ -10,7 +10,9 @@ struct AddJobView: View {
     @State private var jobType: JobType = .claude
     @State private var command = ""
     @State private var claudePrompt = ""
-    @State private var contextDirectory = ""
+    @State private var claudeModel: ClaudeModel? = nil
+    @State private var useDefaultModel = true
+    @State private var contextDirectories: [String] = []
     @State private var workingDirectory = "~"
     @State private var scheduleType: ScheduleType = .daily
     @State private var hour = 9
@@ -70,12 +72,59 @@ struct AddJobView: View {
                         .animation(.default, value: shakeContentField)
 
                         HStack {
-                            TextField("Context Directory (optional)", text: $contextDirectory)
-                                .font(.system(.body, design: .monospaced))
-                            Button(action: selectContextDirectory) {
-                                Image(systemName: "folder")
+                            Toggle("Use default model", isOn: $useDefaultModel)
+                            Spacer()
+                            if !useDefaultModel {
+                                Picker("", selection: Binding(
+                                    get: { claudeModel ?? .sonnet },
+                                    set: { claudeModel = $0 }
+                                )) {
+                                    ForEach(ClaudeModel.allCases, id: \.self) { model in
+                                        Text(model.displayName).tag(model)
+                                    }
+                                }
+                                .labelsHidden()
+                                .frame(width: 100)
                             }
-                            .buttonStyle(.borderless)
+                        }
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("Context Directories")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                                Spacer()
+                                Button(action: addContextDirectory) {
+                                    Image(systemName: "plus.circle")
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Add directory")
+                            }
+
+                            if contextDirectories.isEmpty {
+                                Text("No directories added (optional)")
+                                    .font(.caption)
+                                    .foregroundStyle(.quaternary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 4)
+                            } else {
+                                ForEach(Array(contextDirectories.enumerated()), id: \.offset) { index, dir in
+                                    HStack(spacing: 4) {
+                                        Text(dir)
+                                            .font(.system(.caption, design: .monospaced))
+                                            .lineLimit(1)
+                                            .truncationMode(.middle)
+                                        Spacer()
+                                        Button(action: { contextDirectories.remove(at: index) }) {
+                                            Image(systemName: "minus.circle")
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .help("Remove")
+                                    }
+                                    .padding(.vertical, 2)
+                                }
+                            }
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
@@ -175,7 +224,9 @@ struct AddJobView: View {
                 jobType = job.jobType
                 command = job.command
                 claudePrompt = job.claudePrompt ?? ""
-                contextDirectory = job.contextDirectory ?? ""
+                claudeModel = job.claudeModel
+                useDefaultModel = job.claudeModel == nil
+                contextDirectories = job.contextDirectories
                 workingDirectory = job.workingDirectory
 
                 switch job.schedule {
@@ -193,14 +244,19 @@ struct AddJobView: View {
         }
     }
 
-    private func selectContextDirectory() {
+    private func addContextDirectory() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
+        panel.allowsMultipleSelection = true
 
-        if panel.runModal() == .OK, let url = panel.url {
-            contextDirectory = url.path
+        if panel.runModal() == .OK {
+            for url in panel.urls {
+                let path = url.path
+                if !contextDirectories.contains(path) {
+                    contextDirectories.append(path)
+                }
+            }
         }
     }
 
@@ -235,13 +291,16 @@ struct AddJobView: View {
             ? .daily(hour: hour, minute: minute)
             : .weekly(weekday: weekday, hour: hour, minute: minute)
 
+        let effectiveModel: ClaudeModel? = useDefaultModel ? nil : claudeModel
+
         if let existing = editing {
             var updated = existing
             updated.name = name
             updated.jobType = jobType
             updated.command = command
             updated.claudePrompt = claudePrompt.isEmpty ? nil : claudePrompt
-            updated.contextDirectory = contextDirectory.isEmpty ? nil : contextDirectory
+            updated.claudeModel = effectiveModel
+            updated.contextDirectories = contextDirectories
             updated.workingDirectory = workingDirectory
             updated.schedule = schedule
             Task {
@@ -255,7 +314,8 @@ struct AddJobView: View {
                 schedule: schedule,
                 jobType: jobType,
                 claudePrompt: claudePrompt.isEmpty ? nil : claudePrompt,
-                contextDirectory: contextDirectory.isEmpty ? nil : contextDirectory
+                claudeModel: effectiveModel,
+                contextDirectories: contextDirectories
             )
             Task {
                 await jobManager.addJob(job)

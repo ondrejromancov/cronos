@@ -19,6 +19,7 @@ enum Shell: String, CaseIterable {
 struct SettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = true
     @AppStorage("shell") private var shell = Shell.zsh.rawValue
+    @AppStorage("defaultClaudeModel") private var defaultClaudeModel = ClaudeModel.sonnet.rawValue
 
     var body: some View {
         Form {
@@ -33,6 +34,14 @@ struct SettingsView: View {
                 Picker("Shell", selection: $shell) {
                     ForEach(Shell.allCases, id: \.self) { shellOption in
                         Text(shellOption.displayName).tag(shellOption.rawValue)
+                    }
+                }
+            }
+
+            Section("Claude") {
+                Picker("Default Model", selection: $defaultClaudeModel) {
+                    ForEach(ClaudeModel.allCases, id: \.self) { model in
+                        Text(model.displayName).tag(model.rawValue)
                     }
                 }
             }

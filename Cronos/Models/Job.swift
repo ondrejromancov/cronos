@@ -5,6 +5,20 @@ enum JobType: String, Codable, CaseIterable {
     case customCommand
 }
 
+enum ClaudeModel: String, Codable, CaseIterable {
+    case sonnet = "sonnet"
+    case opus = "opus"
+    case haiku = "haiku"
+
+    var displayName: String {
+        switch self {
+        case .sonnet: return "Sonnet"
+        case .opus: return "Opus"
+        case .haiku: return "Haiku"
+        }
+    }
+}
+
 struct Job: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
@@ -18,7 +32,17 @@ struct Job: Identifiable, Codable, Equatable {
     // Claude-specific fields
     var jobType: JobType
     var claudePrompt: String?
-    var contextDirectory: String?
+    var claudeModel: ClaudeModel?
+    var contextDirectories: [String]
+
+    // Explicit CodingKeys to support migration from old contextDirectory to contextDirectories
+    private enum CodingKeys: String, CodingKey {
+        case id, name, command, workingDirectory, schedule, isEnabled
+        case lastRun, lastRunSuccessful
+        case jobType, claudePrompt, claudeModel
+        case contextDirectories
+        case contextDirectory // For migration from old format
+    }
 
     init(
         id: UUID = UUID(),
@@ -31,7 +55,8 @@ struct Job: Identifiable, Codable, Equatable {
         lastRunSuccessful: Bool? = nil,
         jobType: JobType = .claude,
         claudePrompt: String? = nil,
-        contextDirectory: String? = nil
+        claudeModel: ClaudeModel? = nil,
+        contextDirectories: [String] = []
     ) {
         self.id = id
         self.name = name
@@ -43,7 +68,8 @@ struct Job: Identifiable, Codable, Equatable {
         self.lastRunSuccessful = lastRunSuccessful
         self.jobType = jobType
         self.claudePrompt = claudePrompt
-        self.contextDirectory = contextDirectory
+        self.claudeModel = claudeModel
+        self.contextDirectories = contextDirectories
     }
 
     /// The command to actually execute, generated from job type and fields
@@ -52,9 +78,15 @@ struct Job: Identifiable, Codable, Equatable {
         case .claude:
             let prompt = claudePrompt ?? ""
             let escapedPrompt = prompt.replacingOccurrences(of: "'", with: "'\\''")
-            var cmd = "claude -p '\(escapedPrompt)'"
-            if let dir = contextDirectory, !dir.isEmpty {
-                // Expand tilde before quoting to ensure shell expansion works
+
+            // Get model (job override or global default)
+            let model = claudeModel
+                ?? ClaudeModel(rawValue: UserDefaults.standard.string(forKey: "defaultClaudeModel") ?? "")
+                ?? .sonnet
+            var cmd = "claude --model \(model.rawValue) -p '\(escapedPrompt)'"
+
+            // Append context directories
+            for dir in contextDirectories where !dir.isEmpty {
                 let expandedDir = (dir as NSString).expandingTildeInPath
                 let escapedDir = expandedDir.replacingOccurrences(of: "'", with: "'\\''")
                 cmd += " '\(escapedDir)'"
@@ -81,6 +113,32 @@ struct Job: Identifiable, Codable, Equatable {
         // New fields with defaults for migration
         jobType = try container.decodeIfPresent(JobType.self, forKey: .jobType) ?? .customCommand
         claudePrompt = try container.decodeIfPresent(String.self, forKey: .claudePrompt)
-        contextDirectory = try container.decodeIfPresent(String.self, forKey: .contextDirectory)
+        claudeModel = try container.decodeIfPresent(ClaudeModel.self, forKey: .claudeModel)
+
+        // Migration: support both old single contextDirectory and new contextDirectories array
+        if let dirs = try container.decodeIfPresent([String].self, forKey: .contextDirectories) {
+            contextDirectories = dirs
+        } else if let singleDir = try container.decodeIfPresent(String.self, forKey: .contextDirectory) {
+            contextDirectories = singleDir.isEmpty ? [] : [singleDir]
+        } else {
+            contextDirectories = []
+        }
+    }
+
+    // Custom encoder to write new format (contextDirectories, not contextDirectory)
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(command, forKey: .command)
+        try container.encode(workingDirectory, forKey: .workingDirectory)
+        try container.encode(schedule, forKey: .schedule)
+        try container.encode(isEnabled, forKey: .isEnabled)
+        try container.encodeIfPresent(lastRun, forKey: .lastRun)
+        try container.encodeIfPresent(lastRunSuccessful, forKey: .lastRunSuccessful)
+        try container.encode(jobType, forKey: .jobType)
+        try container.encodeIfPresent(claudePrompt, forKey: .claudePrompt)
+        try container.encodeIfPresent(claudeModel, forKey: .claudeModel)
+        try container.encode(contextDirectories, forKey: .contextDirectories)
     }
 }
