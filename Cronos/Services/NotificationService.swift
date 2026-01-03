@@ -19,11 +19,19 @@ actor NotificationService {
     }
 
     /// Send a notification when a job fails
-    func sendJobFailedNotification(jobName: String) async {
+    func sendJobFailedNotification(jobId: UUID, jobName: String, output: String?) async {
         let content = UNMutableNotificationContent()
         content.title = "Job Failed"
-        content.body = "Job '\(jobName)' failed"
+
+        if let output = output, !output.isEmpty {
+            let preview = truncateOutput(output, maxLength: 100)
+            content.body = "Job '\(jobName)' failed\n\(preview)"
+        } else {
+            content.body = "Job '\(jobName)' failed"
+        }
+
         content.sound = .default
+        content.userInfo = ["jobId": jobId.uuidString]
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
@@ -39,11 +47,19 @@ actor NotificationService {
     }
 
     /// Send a notification when a job succeeds
-    func sendJobSucceededNotification(jobName: String) async {
+    func sendJobSucceededNotification(jobId: UUID, jobName: String, output: String?) async {
         let content = UNMutableNotificationContent()
         content.title = "Job Succeeded"
-        content.body = "Job '\(jobName)' completed successfully"
+
+        if let output = output, !output.isEmpty {
+            let preview = truncateOutput(output, maxLength: 100)
+            content.body = "Job '\(jobName)'\n\(preview)"
+        } else {
+            content.body = "Job '\(jobName)' completed successfully"
+        }
+
         content.sound = .default
+        content.userInfo = ["jobId": jobId.uuidString]
 
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
@@ -56,5 +72,18 @@ actor NotificationService {
         } catch {
             print("Failed to send notification: \(error)")
         }
+    }
+
+    /// Truncate output to a reasonable preview length
+    private func truncateOutput(_ output: String, maxLength: Int) -> String {
+        let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Get last lines (most relevant for output)
+        let lines = trimmed.components(separatedBy: .newlines)
+        let lastLines = lines.suffix(3).joined(separator: "\n")
+
+        if lastLines.count <= maxLength {
+            return lastLines
+        }
+        return String(lastLines.suffix(maxLength - 1)) + "…"
     }
 }

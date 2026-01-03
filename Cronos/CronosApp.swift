@@ -2,12 +2,16 @@ import SwiftUI
 
 @main
 struct CronosApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var jobManager = JobManager()
 
     var body: some Scene {
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(jobManager)
+                .onAppear {
+                    appDelegate.jobManager = jobManager
+                }
         } label: {
             Label("Cronos", systemImage: "clock.badge.checkmark")
                 .labelStyle(.iconOnly)

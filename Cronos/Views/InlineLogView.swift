@@ -3,16 +3,10 @@ import SwiftUI
 struct InlineLogView: View {
     let job: Job
     @EnvironmentObject var jobManager: JobManager
-    @State private var selectedTab: LogTab = .stdout
     @State private var logs: (stdout: String, stderr: String) = ("", "")
     @State private var latestRun: LogRun?
     @State private var isLoading = true
     @State private var scrollPosition: String?
-
-    enum LogTab: String, CaseIterable {
-        case stdout = "stdout"
-        case stderr = "stderr"
-    }
 
     private var isRunning: Bool {
         jobManager.isRunning(job)
@@ -32,13 +26,16 @@ struct InlineLogView: View {
         return logs.stderr
     }
 
-    private var displayedLog: String {
-        switch selectedTab {
-        case .stdout:
-            return currentStdout
-        case .stderr:
-            return currentStderr
+    /// Combined output with stderr appended if present
+    private var combinedOutput: String {
+        var output = currentStdout
+        if !currentStderr.isEmpty {
+            if !output.isEmpty {
+                output += "\n\n--- stderr ---\n"
+            }
+            output += currentStderr
         }
+        return output
     }
 
     private var runStartTime: Date? {
@@ -52,22 +49,8 @@ struct InlineLogView: View {
         VStack(spacing: 0) {
             // Header
             HStack(spacing: 8) {
-                // Tabs
-                Picker("", selection: $selectedTab) {
-                    ForEach(LogTab.allCases, id: \.self) { tab in
-                        HStack(spacing: 4) {
-                            Text(tab.rawValue)
-                            if hasContent(for: tab) {
-                                Circle()
-                                    .fill(tab == .stderr ? Color.red : Color.green)
-                                    .frame(width: 6, height: 6)
-                            }
-                        }
-                        .tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 160)
+                Text("Output")
+                    .font(.headline)
 
                 Spacer()
 
@@ -103,16 +86,15 @@ struct InlineLogView: View {
             // Log content
             ScrollViewReader { proxy in
                 ScrollView {
-                    if displayedLog.isEmpty {
+                    if combinedOutput.isEmpty {
                         Text(isRunning ? "Waiting for output..." : "(empty)")
                             .foregroundStyle(.secondary)
                             .font(.system(.caption, design: .monospaced))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
                     } else {
-                        Text(displayedLog)
+                        Text(combinedOutput)
                             .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(selectedTab == .stderr ? .secondary : .primary)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(8)
@@ -128,7 +110,7 @@ struct InlineLogView: View {
                     RoundedRectangle(cornerRadius: LayoutConstants.buttonCornerRadius)
                         .fill(Color(nsColor: .textBackgroundColor).opacity(0.6))
                 )
-                .onChange(of: displayedLog) { _, newValue in
+                .onChange(of: combinedOutput) { _, newValue in
                     // Smart auto-scroll: only scroll if we're near the bottom
                     // For simplicity, always scroll on new content while running
                     if isRunning {
@@ -149,15 +131,6 @@ struct InlineLogView: View {
                     await loadLogs()
                 }
             }
-        }
-    }
-
-    private func hasContent(for tab: LogTab) -> Bool {
-        switch tab {
-        case .stdout:
-            return !currentStdout.isEmpty
-        case .stderr:
-            return !currentStderr.isEmpty
         }
     }
 

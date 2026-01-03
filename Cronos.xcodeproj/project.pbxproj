@@ -34,6 +34,7 @@
 		A10000010000000000000025 /* VisualEffectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000025 /* VisualEffectView.swift */; };
 		A10000010000000000000026 /* HoverButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000026 /* HoverButton.swift */; };
 		A10000010000000000000027 /* SearchField.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000027 /* SearchField.swift */; };
+		A10000010000000000000028 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000020000000000000028 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +65,7 @@
 		A10000020000000000000025 /* VisualEffectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualEffectView.swift; sourceTree = "<group>"; };
 		A10000020000000000000026 /* HoverButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverButton.swift; sourceTree = "<group>"; };
 		A10000020000000000000027 /* SearchField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchField.swift; sourceTree = "<group>"; };
+		A10000020000000000000028 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A10000030000000000000001 /* Cronos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cronos.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -90,6 +92,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000020000000000000001 /* CronosApp.swift */,
+				A10000020000000000000028 /* AppDelegate.swift */,
 				A10000050000000000000003 /* Models */,
 				A10000050000000000000004 /* Views */,
 				A10000050000000000000005 /* ViewModels */,
@@ -279,6 +282,7 @@
 				A10000010000000000000025 /* VisualEffectView.swift in Sources */,
 				A10000010000000000000026 /* HoverButton.swift in Sources */,
 				A10000010000000000000027 /* SearchField.swift in Sources */,
+				A10000010000000000000028 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

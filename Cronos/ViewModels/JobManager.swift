@@ -172,11 +172,13 @@ class JobManager: ObservableObject {
                 await saveJobs()
             }
 
-            // Send notification
+            // Send notification with output preview
+            let output = liveOutputs[job.id]?.stdout ?? ""
             if success {
-                await NotificationService.shared.sendJobSucceededNotification(jobName: job.name)
+                await NotificationService.shared.sendJobSucceededNotification(jobId: job.id, jobName: job.name, output: output)
             } else {
-                await NotificationService.shared.sendJobFailedNotification(jobName: job.name)
+                let errorOutput = liveOutputs[job.id]?.stderr ?? output
+                await NotificationService.shared.sendJobFailedNotification(jobId: job.id, jobName: job.name, output: errorOutput)
             }
         } catch {
             errorMessage = "Failed to run job '\(job.name)': \(error.localizedDescription)"
@@ -194,7 +196,8 @@ class JobManager: ObservableObject {
             }
 
             // Send notification on error
-            await NotificationService.shared.sendJobFailedNotification(jobName: job.name)
+            let errorOutput = liveOutputs[job.id]?.stderr ?? liveOutputs[job.id]?.stdout
+            await NotificationService.shared.sendJobFailedNotification(jobId: job.id, jobName: job.name, output: errorOutput)
         }
 
         runningJobIds.remove(job.id)

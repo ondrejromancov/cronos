@@ -5,18 +5,24 @@ struct LogHistoryView: View {
     @EnvironmentObject var jobManager: JobManager
     @State private var runs: [LogRun] = []
     @State private var selectedRunId: UUID?
-    @State private var selectedTab: LogTab = .stdout
     @State private var logs: (stdout: String, stderr: String) = ("", "")
     @State private var isLoadingRuns = true
     @State private var isLoadingLogs = false
 
-    enum LogTab: String, CaseIterable {
-        case stdout = "stdout"
-        case stderr = "stderr"
-    }
-
     private var selectedRun: LogRun? {
         runs.first { $0.id == selectedRunId }
+    }
+
+    /// Combined output with stderr appended if present
+    private var combinedOutput: String {
+        var output = logs.stdout
+        if !logs.stderr.isEmpty {
+            if !output.isEmpty {
+                output += "\n\n--- stderr ---\n"
+            }
+            output += logs.stderr
+        }
+        return output
     }
 
     var body: some View {
@@ -79,23 +85,10 @@ struct LogHistoryView: View {
     private var logContent: some View {
         VStack(spacing: 0) {
             if let run = selectedRun {
-                // Header with tabs
+                // Header
                 HStack(spacing: 12) {
-                    Picker("", selection: $selectedTab) {
-                        ForEach(LogTab.allCases, id: \.self) { tab in
-                            HStack(spacing: 4) {
-                                Text(tab.rawValue)
-                                if hasContent(for: tab) {
-                                    Circle()
-                                        .fill(tab == .stderr ? Color.red : Color.green)
-                                        .frame(width: 6, height: 6)
-                                }
-                            }
-                            .tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 160)
+                    Text("Output")
+                        .font(.headline)
 
                     Spacer()
 
@@ -131,17 +124,15 @@ struct LogHistoryView: View {
                     Spacer()
                 } else {
                     ScrollView {
-                        let content = selectedTab == .stdout ? logs.stdout : logs.stderr
-                        if content.isEmpty {
+                        if combinedOutput.isEmpty {
                             Text("(empty)")
                                 .foregroundStyle(.secondary)
                                 .font(.system(.caption, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .padding()
                         } else {
-                            Text(content)
+                            Text(combinedOutput)
                                 .font(.system(.caption, design: .monospaced))
-                                .foregroundStyle(selectedTab == .stderr ? .secondary : .primary)
                                 .textSelection(.enabled)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(12)
@@ -157,15 +148,6 @@ struct LogHistoryView: View {
                     description: Text("Choose a run from the list to view its logs")
                 )
             }
-        }
-    }
-
-    private func hasContent(for tab: LogTab) -> Bool {
-        switch tab {
-        case .stdout:
-            return !logs.stdout.isEmpty
-        case .stderr:
-            return !logs.stderr.isEmpty
         }
     }
 
