@@ -1,0 +1,114 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: Cronos
+  SCHEME: Cronos
+  PROJECT: Cronos.xcodeproj
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.2'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Update version in project
+        run: |
+          sed -i '' "s/MARKETING_VERSION = .*/MARKETING_VERSION = ${{ steps.version.outputs.version }};/" "$PROJECT/project.pbxproj"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = ${{ github.run_number }};/" "$PROJECT/project.pbxproj"
+
+      - name: Build app
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -derivedDataPath build \
+            -destination 'generic/platform=macOS' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ENABLE_HARDENED_RUNTIME=NO \
+            clean build
+
+      - name: Locate and prepare app
+        id: app
+        run: |
+          APP_PATH=$(find build -name "*.app" -type d | head -1)
+          echo "app_path=$APP_PATH" >> $GITHUB_OUTPUT
+          echo "Found app at: $APP_PATH"
+          xattr -cr "$APP_PATH"
+
+      - name: Create DMG
+        run: |
+          mkdir -p dmg-staging
+          cp -R "${{ steps.app.outputs.app_path }}" dmg-staging/
+          ln -s /Applications dmg-staging/Applications
+
+          DMG_NAME="${APP_NAME}-${{ steps.version.outputs.version }}.dmg"
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder dmg-staging \
+            -ov \
+            -format UDZO \
+            "$DMG_NAME"
+
+          echo "dmg_name=$DMG_NAME" >> $GITHUB_ENV
+
+      - name: Calculate SHA256
+        run: |
+          SHA256=$(shasum -a 256 "$dmg_name" | awk '{print $1}')
+          echo "sha256=$SHA256" >> $GITHUB_ENV
+          echo "SHA256: $SHA256"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Cronos ${{ steps.version.outputs.version }}
+          body: |
+            ## Cronos ${{ steps.version.outputs.version }}
+
+            ### Installation
+
+            **Via Homebrew (recommended):**
+            ```bash
+            brew install --cask ondrejromancov/tap/claudecron
+            ```
+
+            **Manual installation:**
+            1. Download `${{ env.dmg_name }}`
+            2. Open the DMG and drag Cronos to Applications
+            3. Right-click the app and select "Open" (required for unsigned apps)
+
+            ### SHA256 Checksum
+            ```
+            ${{ env.sha256 }}  ${{ env.dmg_name }}
+            ```
+
+            ### Requirements
+            - macOS 14 (Sonoma) or later
+          files: ${{ env.dmg_name }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

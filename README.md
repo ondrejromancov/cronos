@@ -4,6 +4,7 @@ A lightweight macOS menu bar app for scheduling bash commands.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange)
+[![GitHub release](https://img.shields.io/github/v/release/ondrejromancov/chronos)](https://github.com/ondrejromancov/chronos/releases)
 
 ## Features
 
@@ -18,9 +19,27 @@ A lightweight macOS menu bar app for scheduling bash commands.
 
 ## Installation
 
-1. Clone the repo
-2. Open `Cronos.xcodeproj` in Xcode
-3. Build and run (⌘R)
+### Homebrew (Recommended)
+
+```bash
+brew install --cask ondrejromancov/tap/claudecron
+```
+
+### Manual Download
+
+1. Download the latest DMG from [Releases](https://github.com/ondrejromancov/chronos/releases)
+2. Open the DMG and drag Cronos to your Applications folder
+3. **Important:** Right-click the app and select "Open" (required for unsigned apps)
+
+> **Note:** Cronos is not notarized by Apple. On first launch, you may need to go to System Settings > Privacy & Security and click "Open Anyway".
+
+### Build from Source
+
+```bash
+git clone https://github.com/ondrejromancov/chronos.git
+cd chronos
+xcodebuild -project Cronos.xcodeproj -scheme Cronos -configuration Release
+```
 
 ## Usage
 
@@ -77,7 +96,20 @@ Schedule: Daily at 9:00
 ## Requirements
 
 - macOS 14 (Sonoma) or later
-- Xcode 15+ to build
+
+## Uninstalling
+
+### Via Homebrew
+
+```bash
+brew uninstall --cask claudecron
+```
+
+### Manual
+
+1. Quit Cronos from the menu bar
+2. Delete Cronos.app from Applications
+3. Remove data: `rm -rf ~/.cronos`
 
 ## License
 

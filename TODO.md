@@ -1,7 +1,7 @@
 # TODO
 
 ## Installation
-- [ ] Make installation of this program easy
+- [x] Make installation of this program easy (Homebrew cask + GitHub releases)
 
 ## Claude Integration
 - [x] Make the app Claude-oriented by default - run Claude commands with UI for different parameters, with advanced mode for arbitrary bash commands

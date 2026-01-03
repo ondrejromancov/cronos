@@ -10,3 +10,7 @@ DerivedData/
 # Swift Package Manager
 .build/
 .swiftpm/
+
+# Build artifacts
+*.dmg
+dmg-staging/
