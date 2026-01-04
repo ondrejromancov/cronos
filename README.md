@@ -1,6 +1,6 @@
 # Cronos
 
-A lightweight macOS menu bar app for scheduling bash commands.
+A lightweight macOS menu bar app for scheduling bash commands, with a companion Raycast extension.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange)
@@ -17,6 +17,15 @@ A lightweight macOS menu bar app for scheduling bash commands.
 - **Search** — filter jobs by name or command
 - **Launch at login** — starts automatically with your Mac
 
+## Project Structure
+
+```
+cronos/
+├── Cronos/              # macOS menu bar app (Swift)
+├── raycast-extension/   # Raycast extension (TypeScript)
+└── scripts/             # Build and release scripts
+```
+
 ## Installation
 
 1. Download the latest DMG from [Releases](https://github.com/ondrejromancov/chronos/releases)
@@ -27,10 +36,18 @@ A lightweight macOS menu bar app for scheduling bash commands.
 
 ### Build from Source
 
+**macOS App:**
 ```bash
 git clone https://github.com/ondrejromancov/chronos.git
 cd chronos
 xcodebuild -project Cronos.xcodeproj -scheme Cronos -configuration Release
+```
+
+**Raycast Extension:**
+```bash
+cd raycast-extension
+npm install
+npm run dev
 ```
 
 ## Usage
@@ -72,6 +89,26 @@ Jobs and logs are stored locally:
 └── logs/              # Per-run log files
     ├── {runId}.stdout
     └── {runId}.stderr
+```
+
+## Raycast Extension
+
+Manage your Cronos jobs directly from Raycast.
+
+### Commands
+
+- **List Jobs** — View all scheduled jobs, run them, toggle enable/disable, or delete
+- **Create Job** — Create a new scheduled command
+
+### Installation
+
+The extension reads from the same `~/.cronos/jobs.json` file as the menu bar app, so changes sync automatically.
+
+To install for development:
+```bash
+cd raycast-extension
+npm install
+npm run dev
 ```
 
 ## Example
